@@ -7,9 +7,12 @@ Skrypt `compile-and-upload.fish` kompiluje kod C (AVR-GCC) na macOS, generuje pl
 ### Wymagania
 
 - macOS:
-  - Fish (shell)
-  - avr-gcc, avr-libc, avr-binutils (`avr-objcopy`, `avr-size`)
-  - ssh
+  - avr-gcc
+    ```bash
+    brew tap osx-cross/avr
+    brew install avr-gcc
+    avr-gcc --version
+    ```
 - Raspberry Pi (host zdalny):
   - avrdude (dostępny jako `sudo avrdude`)
   - plik konfiguracyjny `~/avrdude.conf` (dostosuj ścieżkę w skrypcie, jeśli inna)
@@ -96,14 +99,14 @@ Skrypt używa dokładnie tej konfiguracji (parametr `-C ~/avrdude.conf` i progra
 
 1. Waliduje argumenty i opcje.
 2. Ustawia parametry projektu (`MCU=attiny2313`, `F_CPU=1000000UL`).
-3. Czyści poprzednie artefakty (`*.bin`, `*.hex`, `*.map` dla danego pliku).
+3. Tworzy folder `target/` i czyści poprzednie artefakty (`target/*.bin`, `target/*.hex`, `target/*.map` dla danego pliku).
 4. Kompiluje do `.bin` i generuje `.hex`.
 5. Opcjonalnie wyświetla rozmiary (`--size`).
 6. Programuje układ przez SSH, przesyłając `.hex` potokiem do `avrdude` na RPi.
 7. Opcjonalnie weryfikuje (`--verify`) i restartuje (`--restart`).
 8. Zwraca czytelne logi i kod błędu w razie niepowodzenia.
 
-Artefakty: `nazwa.bin`, `nazwa.hex`, `nazwa.map` (dla `--size`).
+Artefakty: `target/nazwa.bin`, `target/nazwa.hex`, `target/nazwa.map` (dla `--size`).
 
 ### Dostosowanie
 

@@ -110,13 +110,19 @@ if test $trace_flag -eq 1
     set fish_trace 1
 end
 
+# Stwórz folder target jeśli nie istnieje
+if not test -d "target"
+    run "mkdir -p target"
+    or exit 1
+end
+
 # Konfiguracja projektu
 set -l MCU "attiny2313"
 set -l F_CPU "1000000UL"  # 1MHz zgodnie z komentarzem w kodzie
 set -l SOURCE "$source_file"
-set -l BINARY "$basename_file.bin"
-set -l HEXFILE "$basename_file.hex"
-set -l MAPFILE "$basename_file.map"
+set -l BINARY "target/$basename_file.bin"
+set -l HEXFILE "target/$basename_file.hex"
+set -l MAPFILE "target/$basename_file.map"
 
 # Ulepszone flagi kompilacji
 set -l CFLAGS "-std=c11 -Wall -Wextra -Wpedantic -g -Os"
