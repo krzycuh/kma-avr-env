@@ -99,13 +99,13 @@ avr-build <host> <plik.c> [opcje]
 
 ```bash
 # Kompilacja i programowanie z weryfikacją
-avr-build rpi_local attiny-rpi-com.c --verify
+avr-build rpi_local main.c --verify
 
 # Podgląd rozmiarów i restart po flashu
-avr-build rpi_local attiny-rpi-com.c --size --restart
+avr-build rpi_local main.c --size --restart
 
 # Diagnostyka
-avr-build rpi_local attiny-rpi-com.c --trace
+avr-build rpi_local main.c --trace
 ```
 
 ### Co robi skrypt
