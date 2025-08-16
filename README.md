@@ -2,23 +2,36 @@
 
 ## Kompilacja i programowanie AVR (ATtiny2313)
 
-Skrypt `compile-and-upload.fish` kompiluje kod C (AVR-GCC) na macOS, generuje plik `.hex` i programuje mikrokontroler na Raspberry Pi przez SSH (z użyciem `avrdude`).
+Narzędzie `avr-build` kompiluje kod C (AVR-GCC) na macOS, generuje plik `.hex` i programuje mikrokontroler na Raspberry Pi przez SSH (z użyciem `avrdude`).
+
+### Instalacja
+
+1. **Zainstaluj AVR-GCC na macOS:**
+   ```bash
+   brew tap osx-cross/avr
+   brew install avr-gcc
+   avr-gcc --version
+   ```
+
+2. **Dodaj avr-build do PATH:**
+   ```bash
+   source setup-path.fish
+   ```
+
+   Aby dodać na stałe do Fish shell:
+   ```bash
+   echo 'set -gx PATH "/pełna/ścieżka/do/projektu/lib" $PATH' >> ~/.config/fish/config.fish
+   ```
 
 ### Wymagania
 
-- macOS:
-  - avr-gcc
-    ```bash
-    brew tap osx-cross/avr
-    brew install avr-gcc
-    avr-gcc --version
-    ```
-- Raspberry Pi (host zdalny):
+- **macOS:** Fish shell, avr-gcc, avr-objcopy, avr-size
+- **Raspberry Pi (host zdalny):**
   - avrdude (dostępny jako `sudo avrdude`)
-  - plik konfiguracyjny `~/avrdude.conf` (dostosuj ścieżkę w skrypcie, jeśli inna)
-  - konfiguracja programatora pod nazwą `kma-at2313` (zmień, jeśli używasz innego)
+  - plik konfiguracyjny `~/avrdude.conf` 
+  - konfiguracja programatora `kma-at2313`
 
-Domyślny układ w skrypcie: `attiny2313`, `F_CPU=1000000UL`.
+**Domyślne ustawienia:** ATtiny2313, F_CPU=1MHz
 
 ### Konfiguracja Raspberry Pi (GPIO/avrdude)
 
@@ -68,7 +81,7 @@ Skrypt używa dokładnie tej konfiguracji (parametr `-C ~/avrdude.conf` i progra
 ### Użycie
 
 ```bash
-./compile-and-upload.fish <host> <plik.c> [opcje]
+avr-build <host> <plik.c> [opcje]
 ```
 
 - **host**: alias lub adres SSH (np. `rpi_local`, `user@rpi.local`)
@@ -86,13 +99,13 @@ Skrypt używa dokładnie tej konfiguracji (parametr `-C ~/avrdude.conf` i progra
 
 ```bash
 # Kompilacja i programowanie z weryfikacją
-./compile-and-upload.fish rpi_local attiny-rpi-com.c --verify
+avr-build rpi_local attiny-rpi-com.c --verify
 
 # Podgląd rozmiarów i restart po flashu
-./compile-and-upload.fish rpi_local attiny-rpi-com.c --size --restart
+avr-build rpi_local attiny-rpi-com.c --size --restart
 
 # Diagnostyka
-./compile-and-upload.fish rpi_local attiny-rpi-com.c --trace
+avr-build rpi_local attiny-rpi-com.c --trace
 ```
 
 ### Co robi skrypt
@@ -124,5 +137,5 @@ Artefakty: `target/nazwa.bin`, `target/nazwa.hex`, `target/nazwa.map` (dla `--si
 ### Pomoc
 
 ```bash
-./compile-and-upload.fish --help
+avr-build --help
 ```

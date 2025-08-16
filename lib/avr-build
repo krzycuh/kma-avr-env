@@ -1,0 +1,137 @@
+#!/usr/bin/env fish
+
+# Wyznacz absolutną ścieżkę do katalogu lib (gdzie jest ten skrypt)
+set script_path (realpath (status filename))
+set lib_dir (dirname "$script_path")
+
+# Import wspólnych funkcji
+source $lib_dir/common.fish
+
+function print_help
+    echo "Użycie: "(basename (status filename))" <host> <plik.c> [opcje]"
+    echo
+    echo "Orkiestrator - kompiluje kod AVR i wgrywa na RPi w jednym kroku."
+    echo "Wywołuje kolejno: lib/compile.fish, następnie lib/upload.fish"
+    echo
+    echo "Argumenty:"
+    echo "  <host>     docelowy host SSH (np. rpi_local)"
+    echo "  <plik.c>   pełna nazwa pliku źródłowego (np. main.c lub projects/main.c)"
+    echo
+    echo "Opcje:"
+    echo "  --restart  zrestartuj mikrokontroler po flashu"
+    echo "  --size     pokaż rozmiar sekcji podczas kompilacji"
+    echo "  --trace    włącz szczegółowe śledzenie"
+    echo "  -h, --help pokaż pomoc"
+    echo
+    echo "Przykłady:"
+    echo "  "(basename (status filename))" rpi_local main.c"
+    echo "  "(basename (status filename))" rpi_local projects/main.c --size --restart"
+    echo "  "(basename (status filename))" rpi_local ../other-project/code.c"
+    echo
+    echo "Skrypt może być uruchamiany z dowolnego katalogu."
+end
+
+# Parsowanie argumentów
+set -l host ""
+set -l source_file ""
+set -l restart_flag 0
+set -l size_flag 0
+set -l trace_flag 0
+
+set -l positional_count 0
+for arg in $argv
+    switch $arg
+        case -h --help
+            print_help
+            exit 0
+        case --restart
+            set restart_flag 1
+        case --size
+            set size_flag 1
+        case --trace
+            set trace_flag 1
+        case '*'
+            set positional_count (math $positional_count + 1)
+            if test $positional_count -eq 1
+                set host $arg
+            else if test $positional_count -eq 2
+                set source_file $arg
+            end
+    end
+end
+
+if test -z "$host" -o -z "$source_file"
+    error "Brak wymaganych argumentów!"
+    print_help
+    exit 1
+end
+
+# Konwertuj ścieżkę pliku źródłowego na absolutną
+set source_file (realpath "$source_file")
+
+# Wyciągnij katalog i nazwę bazową dla ścieżki HEX
+set -l source_dir (dirname "$source_file")
+set -l basename_file (basename (string replace -r '\.c$' '' "$source_file"))
+set -l hex_file "$source_dir/target/$basename_file.hex"
+
+info "🚀 Rozpoczynanie kompilacji i wgrywania"
+info "Plik źródłowy: $source_file"
+info "Host docelowy: $host"
+info "Katalog roboczy: "(pwd)
+
+# KROK 1: Kompilacja
+info (separator)
+info "KROK 1/2: Kompilacja"  
+info (separator)
+
+set -l compile_args "$source_file"
+if test $size_flag -eq 1
+    set compile_args $compile_args --size
+end
+if test $trace_flag -eq 1
+    set compile_args $compile_args --trace
+end
+
+# Sprawdź czy skrypt lib/compile.fish istnieje
+if not test -f "$lib_dir/compile.fish"
+    error "Brak pliku $lib_dir/compile.fish!"
+    exit 1
+end
+
+fish $lib_dir/compile.fish $compile_args
+set -l compile_result $status
+
+if test $compile_result -ne 0
+    error "❌ Kompilacja nie powiodła się!"
+    exit $compile_result
+end
+
+# KROK 2: Wgrywanie
+info (separator)
+info "KROK 2/2: Wgrywanie"
+info (separator)
+
+set -l upload_args $host "$hex_file"
+if test $restart_flag -eq 1
+    set upload_args $upload_args --restart
+end
+if test $trace_flag -eq 1
+    set upload_args $upload_args --trace
+end
+
+# Sprawdź czy skrypt lib/upload.fish istnieje
+if not test -f "$lib_dir/upload.fish"
+    error "Brak pliku $lib_dir/upload.fish!"
+    exit 1
+end
+
+fish $lib_dir/upload.fish $upload_args
+set -l upload_result $status
+
+if test $upload_result -ne 0
+    error "❌ Wgrywanie nie powiodło się!"
+    exit $upload_result
+end
+
+info "🎉 Wszystko zakończone pomyślnie!"
+info "Plik $source_file został skompilowany i wgrany na $host"
